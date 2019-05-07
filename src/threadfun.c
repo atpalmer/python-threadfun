@@ -11,8 +11,12 @@ struct thread_args {
 
 static void *run_thread(void *_args) {
     struct thread_args *args = _args;
+    int result = 1;
     for(int i = args->start; i < args->end; ++i) {
-        printf("Thread: %d; Iteration: %d\n", args->thread, i);
+        for(int j = 0; j < 1000000; ++j) {
+            result *= 2;
+        }
+        printf("Thread: %d; Iteration: %d; Result: %d\n", args->thread, i, result);
     }
     return NULL;
 }
