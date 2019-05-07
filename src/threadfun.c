@@ -2,26 +2,30 @@
 #include <Python.h>
 
 
-static struct thread_args {
-    int iter_count;
+struct thread_args {
+    int thread;
+    int start;
+    int end;
 };
 
 
 static void *run_thread(void *_args) {
     struct thread_args *args = _args;
-    printf("Iteration: %d\n", args->iter_count);
+    for(int i = args->start; i < args->end; ++i) {
+        printf("Thread: %d; Iteration: %d\n", args->thread, i);
+    }
     return NULL;
 }
 
 
 static PyObject *threadfun(PyObject *self, PyObject *args) {
-    int thread_start;
-    int thread_end;
-    if(!PyArg_ParseTuple(args, "ii", &thread_start, &thread_end)) {
+    int start_val;
+    int end_val;
+    int thread_count = 4;
+    if(!PyArg_ParseTuple(args, "iii", &start_val, &end_val, &thread_count)) {
         return NULL;
     }
 
-    int thread_count = thread_end - thread_start;
     if(thread_count < 1) {
         PyErr_SetString(PyExc_ValueError, "Thread count cannot be less than 1");
         return NULL;
@@ -30,21 +34,18 @@ static PyObject *threadfun(PyObject *self, PyObject *args) {
     pthread_t threads[thread_count];
     struct thread_args thread_args[thread_count];
 
-    for (int i = thread_start; i < thread_end; ++i) {
-        thread_args[i].iter_count = i;
+    for(int i = 0; i < thread_count; ++i) {
+        thread_args[i].thread = i;
+        thread_args[i].start = (i + 1) * start_val;
+        thread_args[i].end = (i + 1) * end_val;
         pthread_create(&threads[i], NULL, run_thread, &thread_args[i]);
     }
 
-    for (int i = thread_start; i < thread_end; ++i) {
-        thread_args[i].iter_count = i * 2;
-        pthread_create(&threads[i], NULL, run_thread, &thread_args[i]);
-    }
-
-    for (int i = thread_start; i < thread_end; ++i) {
+    for (int i = 0; i < thread_count; ++i) {
         pthread_join(threads[i], NULL);
     }
 
-    return Py_BuildValue("{sisi}", "start", thread_args[thread_start].iter_count, "end", thread_args[thread_end - 1].iter_count);
+    return Py_BuildValue("{sisi}", "very_start", thread_args[0].start, "very_end", thread_args[thread_count - 1].end);
 }
 
 
