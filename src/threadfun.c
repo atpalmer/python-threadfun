@@ -9,14 +9,14 @@ struct thread_args {
 };
 
 
-static void *run_thread(void *_args) {
+static void *pointless_work(void *_args) {
     struct thread_args *args = _args;
-    int result = 1;
+    unsigned long result = 1;
     for(int i = args->start; i < args->end; ++i) {
-        for(int j = 0; j < 1000000; ++j) {
-            result *= 2;
+        for(int j = 0; j < i * 1000000; ++j) {
+            result = (result * j) | 1;
         }
-        printf("Thread: %d; Iteration: %d; Result: %d\n", args->thread, i, result);
+        printf("Thread: %d; Iteration: %d; Result: %lu\n", args->thread, i, result);
     }
     return NULL;
 }
@@ -42,7 +42,7 @@ static PyObject *threadfun(PyObject *self, PyObject *args) {
         thread_args[i].thread = i;
         thread_args[i].start = (i + 1) * start_val;
         thread_args[i].end = (i + 1) * end_val;
-        pthread_create(&threads[i], NULL, run_thread, &thread_args[i]);
+        pthread_create(&threads[i], NULL, pointless_work, &thread_args[i]);
     }
 
     for (int i = 0; i < thread_count; ++i) {
